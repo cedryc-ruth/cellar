@@ -210,8 +210,8 @@ return function (App $app) {
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
             ]);
             
-            $data = $request->getParsedBody();      //var_dump($data);die;
-            var_dump($data);die;
+            parse_str($request->getBody()->getContents(), $data);       //var_dump($data);die;
+            
             //Préparer la requête
             $query = "UPDATE `wine` SET `name`='{$data['name']}',`year`='{$data['year']}',"
                 . "`grapes`='{$data['grapes']}',`country`='{$data['country']}',`region`='{$data['region']}',"
