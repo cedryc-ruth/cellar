@@ -129,7 +129,7 @@ return function (App $app) {
 
             $wine = $nbRows>0 ? true :[
                 [
-                    "error" => "Aucun enregistrement n'a été supprimé.",
+                    "error" => "Aucun enregistrement n'a pas été supprimé.",
                 ]
             ];
         } catch(PDOException $e) {
@@ -150,6 +150,57 @@ return function (App $app) {
         return $response
                 ->withHeader('content-type','application/json')
                 ->withHeader('charset','utf-8');
+    });
+    
+    $app->post('/api/wines', function(Request $request, Response $response) {
+        //Se connecter au serveur de DB
+        try {
+            $pdo = new PDO('mysql:host=localhost;dbname=cellar','root','root', [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
+            
+            $data = $request->getParsedBody();      //var_dump($data);die;
+            /*$data = [
+                'name' => 'Chateau...',
+                'year' => '2005',
+                'grapes' => 'Grapes',
+                'country' => 'Belgium',
+                'region' => 'Brussels',
+                'description' => NULL,
+                'picture' => 'chateau.jpg',
+            ];*/
+            
+            //Préparer la requête
+            $query = "INSERT INTO `wine` (`name`, `year`, `grapes`, `country`, `region`, `description`, `picture`) "
+                    . "VALUES ('{$data['name']}', '{$data['year']}', '{$data['grapes']}',"
+                    . " '{$data['country']}', '{$data['region']}', '{$data['description']}', '{$data['picture']}')";
+        
+            //Envoyer la requête
+            $nbRows = $pdo->exec($query);
+
+            //Extraire les données
+            $wines = $nbRows>0 ? true :[
+                [
+                    "error" => "Aucun enregistrement n'a pas été ajouté.",
+                ]
+            ];
+        } catch(PDOException $e) {
+            $wines = [
+                [
+                    "error" => "Problème de base données",
+                    "errorCode" => $e->getCode(),
+                    "errorMsg" => $e->getMessage(),
+                ]
+            ];
+        }
+        
+        //Convertir les données en JSON
+        $data = json_encode($wines);
+        
+        $response->getBody()->write($data);
+        return $response
+                ->withHeader('content-type', 'application/json')
+                ->withHeader('charset', 'utf-8');
     });
     
     $app->group('/users', function (Group $group) {
