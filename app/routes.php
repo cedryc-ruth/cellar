@@ -84,6 +84,38 @@ return function (App $app) {
                 ->withHeader('charset','utf-8');
     });
 
+    $app->get('/api/wines/{id}', function(Request $request, Response $response, array $args) {
+        //DB FIND
+        try {
+            $pdo = new PDO('mysql:host=localhost;dbname=cellar','root','root', [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
+
+            $query = "SELECT * FROM wine WHERE id='{$args['id']}'";
+
+            $stmt = $pdo->query($query);
+
+            $wine = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch(PDOException $e) {
+            $wine = [
+                [
+                    "error" => "Problème de base données",
+                    "errorCode" => $e->getCode(),
+                    "errorMsg" => $e->getMessage(),
+                ]
+            ];
+        }
+        
+        //Convertit en JSON
+        $data = json_encode($wine);
+        
+        $response->getBody()->write($data);
+                
+        return $response
+                ->withHeader('content-type','application/json')
+                ->withHeader('charset','utf-8');
+    });
+    
     $app->group('/users', function (Group $group) {
         $group->get('/', ListUsersAction::class);
         $group->get('/{id}', ViewUserAction::class);
