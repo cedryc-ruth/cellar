@@ -203,6 +203,49 @@ return function (App $app) {
                 ->withHeader('charset', 'utf-8');
     });
     
+    $app->put('/api/wines/{id}', function(Request $request, Response $response, array $args) {
+        //Se connecter au serveur de DB
+        try {
+            $pdo = new PDO('mysql:host=localhost;dbname=cellar','root','root', [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
+            
+            $data = $request->getParsedBody();      //var_dump($data);die;
+            var_dump($data);die;
+            //Préparer la requête
+            $query = "UPDATE `wine` SET `name`='{$data['name']}',`year`='{$data['year']}',"
+                . "`grapes`='{$data['grapes']}',`country`='{$data['country']}',`region`='{$data['region']}',"
+                . "`description`='{$data['description']}',`picture`='{$data['picture']}' "
+                . "WHERE id={$args['id']}"; 
+        
+            //Envoyer la requête
+            $nbRows = $pdo->exec($query);
+
+            //Extraire les données
+            $wines = $nbRows>0 ? true :[
+                [
+                    "error" => "Aucun enregistrement n'a pas été modifié.",
+                ]
+            ];
+        } catch(PDOException $e) {
+            $wines = [
+                [
+                    "error" => "Problème de base données",
+                    "errorCode" => $e->getCode(),
+                    "errorMsg" => $e->getMessage(),
+                ]
+            ];
+        }
+        
+        //Convertir les données en JSON
+        $data = json_encode($wines);
+        
+        $response->getBody()->write($data);
+        return $response
+                ->withHeader('content-type', 'application/json')
+                ->withHeader('charset', 'utf-8');
+    });
+    
     $app->group('/users', function (Group $group) {
         $group->get('/', ListUsersAction::class);
         $group->get('/{id}', ViewUserAction::class);
