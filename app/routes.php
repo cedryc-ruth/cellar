@@ -10,7 +10,7 @@ use Slim\Interfaces\RouteCollectorProxyInterface as Group;
 
 return function (App $app) {
     $app->get('/', function (Request $request, Response $response) {
-        var_dump($request);
+        //var_dump($request);
         $response->getBody()->write('Géniaaal!');
         return $response;
     });
@@ -52,7 +52,31 @@ return function (App $app) {
                 ->withHeader('charset', 'utf-8');
     });
     
-    
+    $app->get('/api/wines/search/{keyword}', function(Request $request, Response $response, array $args) {
+        //DB FIND
+        try {
+            $pdo = new PDO('mysql:host=localhost;dbname=cellar','root','root', [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
+
+            $query = "SELECT * FROM wine WHERE name LIKE '%{$args['keyword']}%'";
+
+            $stmt = $pdo->query($query);
+
+            $wines = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            //Convertit en JSON
+            $data = json_encode($wines);
+        } catch(PDOException $e) {
+            $data = [];
+        }
+        
+        $response->getBody()->write($data);
+                
+        return $response
+                ->withHeader('content-type','application/json')
+                ->withHeader('charset','utf-8');
+    });
 
     $app->group('/users', function (Group $group) {
         $group->get('/', ListUsersAction::class);
